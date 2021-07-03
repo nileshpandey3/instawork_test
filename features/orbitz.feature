@@ -1,7 +1,6 @@
 
 Feature: Orbitz flight booking system
 
-
   Scenario: Verify orbitz flight booking user journey
     Given I am on orbitz homepage
     When I click on flight selection option

@@ -1,4 +1,5 @@
 import datetime
+import time
 
 from behave import given, when, then
 from selenium import webdriver
@@ -104,14 +105,15 @@ def validate_results(context):
                                                                                        ")='London, England, "
                                                                                        "UK (LON-All Airports)']")))
     assert WebDriverWait(driver, 60).until(EC.visibility_of_element_located((By.XPATH, "//button[normalize-space("
-                                                                                       ")='Jul 11']")))
+                                                                                       ")='Jul 16']")))
     assert WebDriverWait(driver, 60).until(EC.visibility_of_element_located((By.XPATH, "//button[normalize-space("
-                                                                                       ")='Jul 18']")))
+                                                                                       ")='Jul 23']")))
 
 
 @when("I select non-stop flights filter")
 def non_stop_flight_filter(context):
-    driver.find_element_by_xpath('//*[@id="stops-0"]').click()
+    time.sleep(3)
+    driver.find_element_by_css_selector('#stops-0').click()
 
 
 @when("I choose the most expensive flight and book it")
@@ -122,24 +124,33 @@ def sort_most_expensive(context):
         EC.element_to_be_clickable((By.XPATH, '//*[@id="listings-sort"]/option[2]'))).click()
     WebDriverWait(driver, 20).until(
         EC.element_to_be_clickable((By.XPATH, "//button[@class='uitk-card-link']"))).click()
+    context.highest_price = driver.find_element_by_xpath('//*[@data-test-id="select-link"][1]').text
     WebDriverWait(driver, 20).until(
         EC.element_to_be_clickable((By.XPATH, "//button[normalize-space()='Continue']"))).click()
     WebDriverWait(driver, 20).until(
-        EC.element_to_be_clickable((By.XPATH, '//*[@data-test-id="offer-listing"][1]'))).click()
+        EC.element_to_be_clickable((By.XPATH, '//*[@data-test-id="intersection-observer"][1]'))).click()
     WebDriverWait(driver, 20).until(
         EC.element_to_be_clickable((By.XPATH, "//button[normalize-space()='Continue']"))).click()
+    context.original_window = driver.current_window_handle
     WebDriverWait(driver, 20).until(
         EC.element_to_be_clickable((By.XPATH, "//a[normalize-space()='No Thanks']"))).click()
 
 
 @then("Confirm my booking details")
 def confirm_booking_details(context):
-    assert WebDriverWait(driver, 60).until(EC.visibility_of_element_located((By.XPATH, "//h2[normalize-space()='San "
-                                                                                       "Francisco to London']")))
-    assert WebDriverWait(driver, 60).until(EC.visibility_of_element_located((By.XPATH, "//h2[normalize-space("
-                                                                                       ")='London to San "
-                                                                                       "Francisco']")))
+    WebDriverWait(driver, 20).until(EC.number_of_windows_to_be(2))
+    for window_handle in driver.window_handles:
+        if window_handle != context.original_window:
+            driver.switch_to.window(window_handle)
+
+    assert WebDriverWait(driver, 60).until(EC.presence_of_element_located((By.XPATH, "//h2[normalize-space()='San "
+                                                                                     "Francisco to London']")))
+    assert WebDriverWait(driver, 60).until(EC.presence_of_element_located((By.XPATH, "//h2[normalize-space("
+                                                                                     ")='London to San "
+                                                                                     "Francisco']")))
+    # booked_price = driver.find_element_by_xpath("//span[@class='uitk-text uitk-type-500 uitk-type-bold "
+    #                                             "uitk-text-emphasis-theme']").text
+    # assert booked_price in context.highest_price
     driver.close()
     driver.quit()
-
 
